@@ -7,6 +7,7 @@
 #include <stack>
 #include <queue>
 #include <cstring>
+#include <unistd.h>
 
 //print graph
 void print_graph(std::vector<std::vector<unsigned> > graph) {
@@ -20,7 +21,7 @@ void print_graph(std::vector<std::vector<unsigned> > graph) {
 //set bit at index in the array addr
 static inline void set_bit(unsigned index, unsigned *addr)
 {
-	unsigned p = index >> 5, x = index & 31;
+	unsigned p = index >> 5, x = index & 31; //& ~ %31
 	addr[p] |= 1 << x;
 }
 
@@ -62,6 +63,9 @@ int main() {
 		if (graph.size() < (*it).first + 1) {
 			graph.resize((*it).first+1);
 		}
+		if (graph.size() < (*it).second + 1) {
+			graph.resize((*it).second+1);
+		}
 		graph[(*it).first].push_back((*it).second);
 	}
 
@@ -79,10 +83,15 @@ int main() {
 	for (std::vector<double>::iterator it = betCen.begin(); it != betCen.end(); it++){
 		(*it) = 0;
 	}
+
+	//travel all vectice
 	for (size_t i = 0; i < graph.size(); i++) {
 		for (size_t j = 0; j < graph[i].size(); j++) {
-			unsigned *checkMap = new unsigned [graph.size()/4 + 4];
-			std::memset(checkMap, 0, (graph.size()/4 + 4)*sizeof(unsigned));
+			unsigned s = graph[i][j];
+			//std::cerr << graph.size() << std::endl;
+			//sleep(1);
+			unsigned *checkMap = new unsigned [graph.size()/32 + 1];
+			std::memset(checkMap, 0, (graph.size()/32+1)*sizeof(unsigned));
 
 			std::stack<unsigned> S; //visited vertices
 			std::vector<std::vector<unsigned> > predecessor(graph.size());
@@ -92,25 +101,25 @@ int main() {
 				(*it) = 0;
 			}
 
-			int s = graph[i][j];
 			numberOfShortestPath[s] = 1;
 
 			std::vector<int> distance(graph.size());
-			for (std::vector<int>::iterator it = numberOfShortestPath.begin(); it != numberOfShortestPath.end(); it++){
+			for (std::vector<int>::iterator it = distance.begin(); it != distance.end(); it++){
 				(*it) = -1;
 			}
 
 			distance[s] = 0;
 			Q.push(s);
 
+			set_bit(s, checkMap);
 			while (!Q.empty()) {
 				unsigned v = Q.front();
 				Q.pop();
-				set_bit(v, checkMap);
 				S.push(v);
 				//find all neighbor w of v
 				for (size_t k = 0; k < graph[v].size(); k++) {
 					unsigned w = graph[v][k];
+					//check if w is visited vectex
 					if (!test_bit(w, checkMap)) {
 						if (distance[w] < 0) {
 							Q.push(w);
@@ -121,12 +130,14 @@ int main() {
 							numberOfShortestPath[w] += numberOfShortestPath[v];
 							predecessor[w].push_back(v);
 	 					}
+							//set w is visited vectex
+						set_bit(w, checkMap);
 					}
 				}
 			}
 
-			std::vector<int> dependency(graph.size());
-			for (std::vector<int>::iterator it = dependency.begin(); it != dependency.end(); it++) {
+			std::vector<double> dependency(graph.size());
+			for (std::vector<double>::iterator it = dependency.begin(); it != dependency.end(); it++) {
 				(*it) = 0;
 			}
 			//S returns vertices in order of non-increasing distance from s
@@ -135,7 +146,7 @@ int main() {
 				S.pop();
 				for (std::vector<unsigned>::iterator it = predecessor[w].begin(); it != predecessor[w].end(); it++) {
 					int v = (*it);
-					dependency[v] += (1 / predecessor[w].size()) * (1 + dependency[w]);
+					dependency[v] += ((double)numberOfShortestPath[v] / (double)numberOfShortestPath[w]) * (1 + (double)dependency[w]);
 				}
 
 				if (w != s) {
@@ -144,6 +155,11 @@ int main() {
 			}
 			delete [] checkMap;
 		}
+	}
+
+	//print betweenness centrality value
+	for (std::vector<double>::iterator it = betCen.begin(); it != betCen.end(); it++){
+		std::cout << (*it) << std::endl;
 	}
 
 	return 0;
