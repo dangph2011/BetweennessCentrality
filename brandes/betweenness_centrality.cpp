@@ -8,12 +8,14 @@
 #include <queue>
 #include <cstring>
 #include <unistd.h>
+#include <iomanip>
+#include <bitset>
 
 //print graph
 void print_graph(std::vector<std::vector<unsigned> > graph) {
-	for (std::vector<std::vector<unsigned> >::iterator it = graph.begin(); it !=graph.end(); it++){
-		for (std::vector<unsigned>::iterator it1 = it->begin(); it1 != it->end(); it1++) {
-			std::cout << it - graph.begin() << " " << (*it1) << std::endl;
+	for (auto &it : graph){
+		for (auto &it1 : it) {
+			std::cout << &it - &graph[0] << " " << it1 << std::endl;
 		}
 	}
 }
@@ -42,8 +44,9 @@ static inline int test_bit(unsigned index, const unsigned *addr)
 int main() {
 	std::ifstream f_in;
 	std::string line;
+	bool directed = true;
 	std::vector<std::vector<unsigned> > graph;
-	f_in.open("../data/facebook_combined.txt");
+	f_in.open("../data/p2p-Gnutella31.txt");
 	if(f_in.fail())
 	{
 	    std::cout << "Error: Opening file";
@@ -55,21 +58,26 @@ int main() {
     while(f_in >> u >> v){
 		//put to vector
 		edgesList.push_back(std::pair<unsigned, unsigned>(u,v));
+
     }
 
 	//Store in adjacency list
-    for (std::vector<std::pair<unsigned, unsigned> >::iterator it = edgesList.begin(); it!= edgesList.end(); it++) {
+    for (auto &it : edgesList) {
 		//std::cout << graph.size();
-		if (graph.size() < (*it).first + 1) {
-			graph.resize((*it).first+1);
+		if (graph.size() < (it.first + 1)) {
+			graph.resize(it.first + 1);
 		}
-		if (graph.size() < (*it).second + 1) {
-			graph.resize((*it).second+1);
+		if (graph.size() < (it.second + 1)) {
+			graph.resize(it.second + 1);
 		}
-		graph[(*it).first].push_back((*it).second);
+
+		graph[it.first].push_back(it.second);
+		if (!directed) {
+			graph[it.second].push_back(it.first);
+		}
 	}
 
-	//sort adjacency list
+	// //sort adjacency list
 	for (std::vector<std::vector<unsigned> >::iterator it = graph.begin(); it !=graph.end(); it++) {
 		std::sort(it->begin(), it->end());
 	}
@@ -80,16 +88,17 @@ int main() {
 	//Compute betweenness centrality
 	std::vector<double> betCen(graph.size());
 	//set all the value of betweenness centrality of all vectices equal to 0
-	for (std::vector<double>::iterator it = betCen.begin(); it != betCen.end(); it++){
-		(*it) = 0;
+	for (auto &it : betCen){
+		it = 0;
 	}
 
 	//travel all vectice
 	for (size_t i = 0; i < graph.size(); i++) {
-		for (size_t j = 0; j < graph[i].size(); j++) {
-			unsigned s = graph[i][j];
+		//for (size_t j = 0; j < graph[i].size(); j++) {
+			unsigned s = i;
 			//std::cerr << graph.size() << std::endl;
 			//sleep(1);
+
 			unsigned *checkMap = new unsigned [graph.size()/32 + 1];
 			std::memset(checkMap, 0, (graph.size()/32+1)*sizeof(unsigned));
 
@@ -97,20 +106,19 @@ int main() {
 			std::vector<std::vector<unsigned> > predecessor(graph.size());
 			std::queue<unsigned> Q; //unvisited vertices
 			std::vector<int> numberOfShortestPath(graph.size());
-			for (std::vector<int>::iterator it = numberOfShortestPath.begin(); it != numberOfShortestPath.end(); it++){
-				(*it) = 0;
+			for (auto &it : numberOfShortestPath){
+				it = 0;
 			}
 
 			numberOfShortestPath[s] = 1;
 
-			std::vector<int> distance(graph.size());
-			for (std::vector<int>::iterator it = distance.begin(); it != distance.end(); it++){
-				(*it) = -1;
+			std::vector<long int> distance(graph.size());
+			for (auto &it : distance){
+				it = -1;
 			}
 
 			distance[s] = 0;
 			Q.push(s);
-
 			set_bit(s, checkMap);
 			while (!Q.empty()) {
 				unsigned v = Q.front();
@@ -119,33 +127,34 @@ int main() {
 				//find all neighbor w of v
 				for (size_t k = 0; k < graph[v].size(); k++) {
 					unsigned w = graph[v][k];
-					//check if w is visited vectex
+					//check if w is visited vertex
+
 					if (!test_bit(w, checkMap)) {
+						set_bit(w, checkMap);	//set w is visited vertex
 						if (distance[w] < 0) {
 							Q.push(w);
 							distance[w] = distance[v] + 1;
 						}
-
-						if (distance[w] == distance[v] + 1) {
-							numberOfShortestPath[w] += numberOfShortestPath[v];
-							predecessor[w].push_back(v);
-	 					}
-							//set w is visited vectex
-						set_bit(w, checkMap);
 					}
+
+					if (distance[w] == distance[v] + 1) {
+						numberOfShortestPath[w] += numberOfShortestPath[v];
+						predecessor[w].push_back(v);
+ 					}
 				}
+
 			}
 
 			std::vector<double> dependency(graph.size());
-			for (std::vector<double>::iterator it = dependency.begin(); it != dependency.end(); it++) {
-				(*it) = 0;
+			for (auto &it : dependency) {
+				it = 0;
 			}
 			//S returns vertices in order of non-increasing distance from s
 			while (!S.empty()) {
 				unsigned w = S.top();
 				S.pop();
-				for (std::vector<unsigned>::iterator it = predecessor[w].begin(); it != predecessor[w].end(); it++) {
-					int v = (*it);
+				for (auto &it : predecessor[w]) {
+					int v = it;
 					dependency[v] += ((double)numberOfShortestPath[v] / (double)numberOfShortestPath[w]) * (1 + (double)dependency[w]);
 				}
 
@@ -154,12 +163,12 @@ int main() {
 				}
 			}
 			delete [] checkMap;
-		}
 	}
 
+	std::cout << std::fixed << std::setprecision(6);
 	//print betweenness centrality value
-	for (std::vector<double>::iterator it = betCen.begin(); it != betCen.end(); it++){
-		std::cout << (*it) << std::endl;
+	for (auto & it : betCen){
+		std::cout << it << std::endl;
 	}
 
 	return 0;
