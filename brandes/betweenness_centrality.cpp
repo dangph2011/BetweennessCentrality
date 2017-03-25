@@ -46,14 +46,15 @@ int main() {
 	std::string line;
 	bool directed = true;
 	std::vector<std::vector<unsigned> > graph;
-	f_in.open("../data/p2p-Gnutella31.txt");
+	unsigned u, v;
+	std::vector<std::pair<unsigned, unsigned> > edgesList;
+
+	f_in.open("../data/email-EuAll.txt");
 	if(f_in.fail())
 	{
 	    std::cout << "Error: Opening file";
 		return 0;
 	}
-	unsigned u, v;
-	std::vector<std::pair<unsigned, unsigned> > edgesList;
 	//read data from file
     while(f_in >> u >> v){
 		//put to vector
@@ -78,8 +79,8 @@ int main() {
 	}
 
 	// //sort adjacency list
-	for (std::vector<std::vector<unsigned> >::iterator it = graph.begin(); it !=graph.end(); it++) {
-		std::sort(it->begin(), it->end());
+	for (auto &it : graph) {
+		std::sort(it.begin(), it.end());
 	}
 
 	//test print graph
