@@ -61,7 +61,7 @@ int main() {
 	uint32_t u, v;
 
 	std::vector<std::pair<uint32_t, uint32_t> > m_edge_list;
-	m_fin.open("../data/test2.txt");
+	m_fin.open("../data/wiki-Vote.txt");
 
 	if (m_fin.fail()) {
 	    std::cout << "Error: Opening file";
@@ -139,7 +139,7 @@ int main() {
 	}
 
 	//print bridge
-		std::cout << "Bridge:\n";
+	std::cout << "Bridge:\n";
 	for (auto &it : m_bridge){
 		std::cout << "\t" << it.first << " " << it.second << "\n";
 	}

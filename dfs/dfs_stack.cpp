@@ -27,7 +27,7 @@ typedef struct sNode{
 	eColor color;
 	uint32_t discovery_time;
 	uint32_t finish_time;
-	std::vector<uint32_t> predecessor;
+	uint32_t predecessor;
 	sNode ()
 	: color(WHITE), discovery_time(0), finish_time(0) {}
 }sNode;
@@ -40,7 +40,7 @@ int main() {
 	uint32_t u, v;
 
 	std::vector<std::pair<uint32_t, uint32_t> > m_edge_list;
-	m_fin.open("../data/test1.txt");
+	m_fin.open("../data/wiki-Vote.txt");
 
 	if (m_fin.fail()) {
 	    std::cout << "Error: Opening file";
@@ -81,22 +81,24 @@ int main() {
             uint32_t s = i;
             S.push(s);
             //std::cerr << "test\n";
+			m_node[s].color = GRAY;
+			m_node[s].discovery_time = ++g_time;
+
             while (!S.empty()) {
                 uint32_t u = S.top();
                 //S.pop();
                 //std::cerr << "test=" << g_time << " " << u << " " << S.size() << "\n";
-                if (m_node[u].color == WHITE) {
-                    m_node[u].color = GRAY;
-                    m_node[u].discovery_time = ++g_time;
-                }
-				
+
 				check = true;
                 for (auto &it : m_graph[u]) {
                     if (m_node[it].color == WHITE) {
                         //m_node[it].discovery_time = ++g_time;
                         S.push(it);
-                        m_node[it].predecessor.push_back(u);
+						m_node[it].color = GRAY;
+						m_node[it].discovery_time = ++g_time;
+                        m_node[it].predecessor = u;
 						check = false;
+						break;
                     }
                 }
 
@@ -118,13 +120,6 @@ int main() {
 		std::cout << "Node Id=" << i << " DT=" << m_node[i].discovery_time << " FT=" << m_node[i].finish_time << "\n";
 	}
 
-    for (auto i = 0; i < m_graph.size(); i++){
-        std::cout << "Node Id=" << i << " Predecessor: ";
-        for (auto &it : m_node[i].predecessor) {
-            std::cout << it << " ";
-        }
-		std::cout << std::endl;
-    }
 
 	return 0;
 }

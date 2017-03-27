@@ -26,7 +26,7 @@ typedef struct sNode{
 	eColor color;
 	uint32_t discovery_time;
 	uint32_t finish_time;
-	std::vector<uint32_t> predecessor;
+	uint32_t predecessor;
 	sNode ()
 	: color(WHITE), discovery_time(0), finish_time(0) {}
 }sNode;
@@ -37,7 +37,7 @@ void dfsVisit(std::vector<std::vector<uint32_t> > p_graph, uint32_t u, std::vect
 	p_node[u].color = GRAY;
 	for (auto &it : p_graph[u]) {
 		if (p_node[it].color == WHITE) {
-			p_node[it].predecessor.push_back(u);
+			p_node[it].predecessor = u;
 			dfsVisit(p_graph, it, p_node);
 		}
 	}
@@ -54,7 +54,7 @@ int main() {
 	uint32_t u, v;
 
 	std::vector<std::pair<uint32_t, uint32_t> > m_edge_list;
-	m_fin.open("../data/test1.txt");
+	m_fin.open("../data/wiki-Vote.txt");
 
 	if (m_fin.fail()) {
 	    std::cout << "Error: Opening file";
@@ -97,6 +97,14 @@ int main() {
 	for (auto i = 0; i < m_graph.size(); i++){
 		std::cout << "Node Id=" << i << " DT=" << m_node[i].discovery_time << " FT=" << m_node[i].finish_time << "\n";
 	}
+
+	// for (auto i = 0; i < m_graph.size(); i++){
+    //     std::cout << "Node Id=" << i << " Predecessor: ";
+    //     for (auto &it : m_node[i].predecessor) {
+    //         std::cout << it << " ";
+    //     }
+	// 	std::cout << std::endl;
+    // }
 
 	return 0;
 }
