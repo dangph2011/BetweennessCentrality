@@ -61,7 +61,7 @@ int main() {
 	uint32_t u, v;
 
 	std::vector<std::pair<uint32_t, uint32_t> > m_edge_list;
-	m_fin.open("../data/wiki-Vote.txt");
+	m_fin.open("../data/test2.txt");
 
 	if (m_fin.fail()) {
 	    std::cout << "Error: Opening file";
@@ -116,7 +116,7 @@ int main() {
 			}
 		} else {
 			for (auto &it : m_graph[i]) {
-				if (m_low[it] > m_node[i].discovery_time) {
+				if (m_low[it] >= m_node[i].discovery_time) {
 					m_articulation.insert(i);
 				}
 			}
@@ -124,6 +124,7 @@ int main() {
 	}
 
 	for (auto i = 0; i < m_graph.size(); i++){
+		std::cout << "Node Id=" << i << ": ";
 		std::cout << m_low[i] << " " << m_node[i].discovery_time << " " << m_node[i].finish_time << "\n";
 	}
 
