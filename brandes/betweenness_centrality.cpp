@@ -44,12 +44,12 @@ static inline int test_bit(unsigned index, const unsigned *addr)
 int main() {
 	std::ifstream f_in;
 	std::string line;
-	bool directed = true;
+	bool directed = false;
 	std::vector<std::vector<unsigned> > graph;
 	unsigned u, v;
 	std::vector<std::pair<unsigned, unsigned> > edgesList;
 
-	f_in.open("../data/email-EuAll.txt");
+	f_in.open("../data/test2.txt");
 	if(f_in.fail())
 	{
 	    std::cout << "Error: Opening file";
@@ -167,6 +167,11 @@ int main() {
 	}
 
 	std::cout << std::fixed << std::setprecision(6);
+    if (!directed) {
+        for (auto &it : betCen) {
+            it /= 2;
+        }
+    }
 	//print betweenness centrality value
 	for (auto & it : betCen){
 		std::cout << it << std::endl;
