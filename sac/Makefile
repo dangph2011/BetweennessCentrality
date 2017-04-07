@@ -2,8 +2,7 @@ all:
 	g++ -std=c++11 -O3 -o graph graph.cpp
 
 debug:
-	g++ -ggdb graph.cpp
+	g++ -ggdb -std=c++11 graph.cpp
 
 clean:
-	rm graph
-	rm a.*
+	rm -rf graph

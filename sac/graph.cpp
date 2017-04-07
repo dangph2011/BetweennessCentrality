@@ -5,6 +5,9 @@
 #include <stack>
 #include <queue>
 #include <iomanip>
+#include <sstream>
+#include <string>
+#include <sys/time.h>
 
 //Travel color, WHITE: unvisited, GRAY: visited but not finish, BLACK: finished
 enum eColor {
@@ -12,6 +15,20 @@ enum eColor {
 	GRAY,
 	BLACK
 };
+
+
+/**
+    Get current time in milisecond.
+    @return the current time in milisecond
+*/
+double getCurrentTimeMlsec() {
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	//second
+	return tv.tv_sec + tv.tv_usec * 1e-6;
+	//milisecond
+	//return (tv.tv_sec + tv.tv_usec / 1000000.0) * 1000;
+}
 
 
 //set bit at index in the array addr
@@ -41,8 +58,8 @@ typedef struct Vertex{
 }Vertex;
 
 class Graph{
-   // uint32_t v_num_;
-   // uint32_t e_num_;
+	uint32_t v_num_;
+	uint32_t e_num_;
     std::vector<std::vector<uint32_t> > edge_list_;
     std::set<uint32_t> vertex_list_;
     bool directed_ = false;
@@ -60,6 +77,43 @@ class Graph{
     // uint32_t getNumberOfEdge() {
     //     return edge_list_.size();
     // }
+
+	bool readMetis(std::string p_file_name, bool p_directed = false) {
+		directed_ = p_directed;
+		std::ifstream f_in;
+		std::string line;
+		uint32_t v;
+		uint32_t count = 1;
+        f_in.open(p_file_name);
+        if (f_in.fail()) {
+            std::cerr << "Error: Opening file\n";
+            return false;
+        }
+		getline(f_in, line);
+		std::istringstream iss1(line);
+		iss1 >> v_num_ >> e_num_;
+		//std::cout << "Vertex=" << v_num_ << " Edge=" << e_num_ << std::endl;
+		edge_list_.resize(v_num_+1);
+		//std::cout << "Vertex=" << v_num_ << " Edge=" << e_num_ << std::endl;
+		while (getline(f_in, line)) {
+			std::istringstream iss(line);
+			//std::cout << "Line=" << line << std::endl;
+	        while (iss >> v) {
+				//std::cout << "\tv=" << v << " " << std::endl;
+				edge_list_[count].push_back(v);
+	    		if (!directed_) {
+	    			edge_list_[v].push_back(count);
+	    		}
+	        }
+        	count++;
+			//std::cout << count << "\n";
+		}
+		for (auto &it : edge_list_) {
+    		std::sort(it.begin(), it.end());
+    	}
+		//std::cout << "END\n";
+		return true;
+	}
 
     bool readEdgeList(std::string p_file_name, bool p_directed = false){
         directed_ = p_directed;
@@ -293,7 +347,13 @@ int main() {
     std::cin.tie(NULL);
 
     Graph g;
-    if (!g.readEdgeList("../data/test2.txt", false)) {
+	//Read edge list format
+    // if (!g.readEdgeList("../data/test2.txt", false)) {
+    //     return 0;
+    // }
+
+	//Read motis format
+	if (!g.readMetis("../data/cond-mat.graph", false)) {
         return 0;
     }
 
@@ -304,6 +364,7 @@ int main() {
         std::cout << "Press 1 to calculate articulation point\n";
         std::cout << "Press 2 to calculate bridge\n";
         std::cout << "Press 3 to calculate betweenness centrality\n";
+		std::cout << "Press 4 to print graph\n";
         std::cout << "Press 0 to exit\n";
         std::cin >> option;
 
@@ -313,61 +374,52 @@ int main() {
 
             case 1:
             {
+				double start_time_articulation = getCurrentTimeMlsec();
                 std::set<uint32_t> m_articulation = g.getArticulationVertex();
                 std::cout << "Articulation vertex:\n";
                 for (auto &it : m_articulation){
                     std::cout << "\t" << it << "\n";
                 }
                 std::cout << std::flush;
+				std::cout << "Time articulation=" << getCurrentTimeMlsec() - start_time_articulation << "\n";
                 break;
             }
 
             case 2:
             {
+				double start_time_bridge = getCurrentTimeMlsec();
                 std::set<std::pair<uint32_t, uint32_t> > m_bridge = g.getBridge();
                 //print bridge
             	std::cout << "Bridge:\n";
             	for (auto &it : m_bridge){
             		std::cout << "\t" << it.first << " " << it.second << "\n";
             	}
+				std::cout << "Time Bridge=" << getCurrentTimeMlsec() - start_time_bridge << "\n";
                 break;
             }
 
             case 3:
             {
+				double start_time_bc = getCurrentTimeMlsec();
                 std::vector<double> m_bet_cen = g.betweennessCentrality();
                 std::cout << std::fixed << std::setprecision(6);
             	//print betweenness centrality value
             	for (auto & it : m_bet_cen){
             		std::cout << it << std::endl;
             	}
+				std::cout << "Time betweenness centrality=" << getCurrentTimeMlsec() - start_time_bc<< "\n";
                 break;
             }
+
+			case 4:
+			{
+				g.printGraph();
+				break;
+			}
 
             default:
                 std::cout << "Bad input\n";
         }
     }
-    // std::vector<double> m_bet_cen = g.betweennessCentrality();
-    // std::cout << std::fixed << std::setprecision(6);
-	// //print betweenness centrality value
-	// for (auto & it : m_bet_cen){
-	// 	std::cout << it << std::endl;
-	// }
-
-    // std::set<uint32_t> m_articulation = g.getArticulationVertex();
-    // std::cout << "Articulation vertex:\n";
-    // for (auto &it : m_articulation){
-    //     std::cout << "\t" << it << "\n";
-    // }
-    // std::cout << std::flush;
-
-    // std::set<std::pair<uint32_t, uint32_t> > m_bridge = g.getBridge();
-    // //print bridge
-	// std::cout << "Bridge:\n";
-	// for (auto &it : m_bridge){
-	// 	std::cout << "\t" << it.first << " " << it.second << "\n";
-	// }
-
     return 0;
 }
