@@ -174,11 +174,9 @@ class Graph{
     				l_articulation.insert(i);
     			}
     		} else {
-    			for (auto &it : edge_list_[i]) {
-    				if (l_node[it].low >= l_node[i].discovery_time) {
-    					l_articulation.insert(i);
-    				}
-    			}
+				if (l_node[l_node[i].predecessor].predecessor > -1 && l_node[i].low >= l_node[l_node[i].predecessor].discovery_time) {
+					l_articulation.insert(l_node[i].predecessor);
+				}
     		}
     	}
         return l_articulation;
@@ -189,11 +187,11 @@ class Graph{
         std::set<std::pair<uint32_t, uint32_t> > l_bridge;
         //Find bridge
     	for (auto i = 0; i < edge_list_.size(); i++) {
-    		for (auto &it : edge_list_[i]) {
-    			if (l_node[i].low > l_node[it].discovery_time) {
-    				l_bridge.insert(std::pair<uint32_t, uint32_t>(it, i));
-    			}
-    		}
+			if (l_node[i].predecessor == -1)
+				continue;
+			if (l_node[i].low > l_node[l_node[i].predecessor].discovery_time) {
+				l_bridge.insert(std::pair<uint32_t, uint32_t>(l_node[i].predecessor, i));
+			}
     	}
         return l_bridge;
     }
@@ -291,17 +289,85 @@ class Graph{
 };
 
 int main() {
+    std::ios_base::sync_with_stdio(false);
+    std::cin.tie(NULL);
+
     Graph g;
     if (!g.readEdgeList("../data/test2.txt", false)) {
         return 0;
     }
 
-    std::vector<double> m_bet_cen = g.betweennessCentrality();
-    std::cout << std::fixed << std::setprecision(6);
-	//print betweenness centrality value
-	for (auto & it : m_bet_cen){
-		std::cout << it << std::endl;
-	}
+    uint16_t option = 1;
+
+    while (option) {
+        std::cout << "Please chose function\n";
+        std::cout << "Press 1 to calculate articulation point\n";
+        std::cout << "Press 2 to calculate bridge\n";
+        std::cout << "Press 3 to calculate betweenness centrality\n";
+        std::cout << "Press 0 to exit\n";
+        std::cin >> option;
+
+        switch (option) {
+            case 0:
+                break;
+
+            case 1:
+            {
+                std::set<uint32_t> m_articulation = g.getArticulationVertex();
+                std::cout << "Articulation vertex:\n";
+                for (auto &it : m_articulation){
+                    std::cout << "\t" << it << "\n";
+                }
+                std::cout << std::flush;
+                break;
+            }
+
+            case 2:
+            {
+                std::set<std::pair<uint32_t, uint32_t> > m_bridge = g.getBridge();
+                //print bridge
+            	std::cout << "Bridge:\n";
+            	for (auto &it : m_bridge){
+            		std::cout << "\t" << it.first << " " << it.second << "\n";
+            	}
+                break;
+            }
+
+            case 3:
+            {
+                std::vector<double> m_bet_cen = g.betweennessCentrality();
+                std::cout << std::fixed << std::setprecision(6);
+            	//print betweenness centrality value
+            	for (auto & it : m_bet_cen){
+            		std::cout << it << std::endl;
+            	}
+                break;
+            }
+
+            default:
+                std::cout << "Bad input\n";
+        }
+    }
+    // std::vector<double> m_bet_cen = g.betweennessCentrality();
+    // std::cout << std::fixed << std::setprecision(6);
+	// //print betweenness centrality value
+	// for (auto & it : m_bet_cen){
+	// 	std::cout << it << std::endl;
+	// }
+
+    // std::set<uint32_t> m_articulation = g.getArticulationVertex();
+    // std::cout << "Articulation vertex:\n";
+    // for (auto &it : m_articulation){
+    //     std::cout << "\t" << it << "\n";
+    // }
+    // std::cout << std::flush;
+
+    // std::set<std::pair<uint32_t, uint32_t> > m_bridge = g.getBridge();
+    // //print bridge
+	// std::cout << "Bridge:\n";
+	// for (auto &it : m_bridge){
+	// 	std::cout << "\t" << it.first << " " << it.second << "\n";
+	// }
 
     return 0;
 }
