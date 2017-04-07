@@ -61,7 +61,7 @@ int main() {
 	uint32_t u, v;
 
 	std::vector<std::pair<uint32_t, uint32_t> > m_edge_list;
-	m_fin.open("../data/wiki-Vote.txt");
+	m_fin.open("../data/test2.txt");
 
 	if (m_fin.fail()) {
 	    std::cout << "Error: Opening file";
@@ -103,38 +103,12 @@ int main() {
 		}
 	}
 
-	//print order visited
-	// for (auto i = 0; i < m_graph.size(); i++){
-	// 	std::cout << "Node Id=" << i << " DT=" << m_node[i].discovery_time << " FT=" << m_node[i].finish_time << "\n";
-	// }
-	//
-	// //print articulation point
-	// for (auto i = 0; i < m_graph.size(); i++) {
-	// 	if (m_node[i].predecessor == -1) {
-	// 		if (m_node[i].num_child > 1) {
-	// 			m_articulation.insert(i);
-	// 		}
-	// 	} else {
-	// 		for (auto &it : m_graph[i]) {
-	// 			if (m_low[it] > m_node[i].discovery_time) {
-	// 				m_articulation.insert(i);
-	// 			}
-	// 		}
-	// 	}
-	// }
-
-	//print articulation
-	// std::cout << "Articulation vertex:\n";
-	// for (auto &it : m_articulation){
-	// 	std::cout << "\t" << it << "\n";
-	// }
-
 	//Find bridge
 	for (auto i = 0; i < m_graph.size(); i++) {
-		for (auto &it : m_graph[i]) {
-			if (m_low[i] > m_node[it].discovery_time) {
-				m_bridge.insert(std::pair<uint32_t, uint32_t>(it, i));
-			}
+		if (m_node[i].predecessor == -1)
+			continue;
+		if (m_low[i] > m_node[m_node[i].predecessor].discovery_time) {
+			m_bridge.insert(std::pair<uint32_t, uint32_t>(m_node[i].predecessor, i));
 		}
 	}
 

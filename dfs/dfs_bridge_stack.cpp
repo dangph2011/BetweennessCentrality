@@ -44,7 +44,7 @@ int main() {
 	uint32_t u, v;
 
 	std::vector<std::pair<uint32_t, uint32_t> > m_edge_list;
-	m_fin.open("../data/wiki-Vote.txt");
+	m_fin.open("../data/test2.txt");
 
 	if (m_fin.fail()) {
 	    std::cout << "Error: Opening file";
@@ -131,10 +131,9 @@ int main() {
 				m_articulation.insert(i);
 			}
 		} else {
-			for (auto &it : m_graph[i]) {
-				if (m_node[it].low > m_node[i].discovery_time) {
-					m_articulation.insert(i);
-				}
+			//std::cout << i << " " << m_node[i].predecessor << " " << m_node[i].low << " " << m_node[m_node[i].predecessor].discovery_time << std::endl;
+			if (m_node[m_node[i].predecessor].predecessor > -1 && m_node[i].low >= m_node[m_node[i].predecessor].discovery_time) {
+				m_articulation.insert(m_node[i].predecessor);
 			}
 		}
 	}
@@ -145,10 +144,10 @@ int main() {
 
 	//Find bridge
 	for (auto i = 0; i < m_graph.size(); i++) {
-		for (auto &it : m_graph[i]) {
-			if (m_node[i].low > m_node[it].discovery_time) {
-				m_bridge.insert(std::pair<uint32_t, uint32_t>(it, i));
-			}
+		if (m_node[i].predecessor == -1)
+			continue;
+		if (m_node[i].low > m_node[m_node[i].predecessor].discovery_time) {
+			m_bridge.insert(std::pair<uint32_t, uint32_t>(m_node[i].predecessor, i));
 		}
 	}
 

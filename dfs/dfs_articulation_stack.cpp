@@ -131,34 +131,23 @@ int main() {
 				m_articulation.insert(i);
 			}
 		} else {
-			for (auto &it : m_graph[i]) {
-				if (m_node[it].low >= m_node[i].discovery_time) {
-					m_articulation.insert(i);
-				}
+			//std::cout << i << " " << m_node[i].predecessor << " " << m_node[i].low << " " << m_node[m_node[i].predecessor].discovery_time << std::endl;
+			if (m_node[m_node[i].predecessor].predecessor > -1 && m_node[i].low >= m_node[m_node[i].predecessor].discovery_time) {
+				m_articulation.insert(m_node[i].predecessor);
 			}
 		}
 	}
 
-	for (auto i = 0; i < m_graph.size(); i++){
-		std::cout << "Node Id=" << i << ": ";
-		std::cout << m_node[i].low << " " << m_node[i].discovery_time << " " << m_node[i].finish_time << "\n";
-	}
+	// for (auto i = 0; i < m_graph.size(); i++){
+	// 	std::cout << "Node Id=" << i << ": ";
+	// 	std::cout << m_node[i].low << " " << m_node[i].discovery_time << " " << m_node[i].finish_time << "\n";
+	// }
 
 	//print articulation
 	std::cout << "Articulation vertex:\n";
 	for (auto &it : m_articulation){
 		std::cout << "\t" << it << "\n";
 	}
-
-	// for (auto i = 0; i < m_graph.size(); i++){
-	// 	std::cout << "Node Id=" << i << " DT=" << m_node[i].discovery_time << " FT=" << m_node[i].finish_time << "\n";
-	// }
-	//
-    // for (auto i = 0; i < m_graph.size(); i++){
-    //     std::cout << "Node Id=" << i << " Predecessor: ";
-    //     std::cout << m_node[i].predecessor << " ";
-	// 	std::cout << std::endl;
-    // }
 
 	return 0;
 }

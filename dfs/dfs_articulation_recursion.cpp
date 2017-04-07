@@ -40,10 +40,19 @@ void dfsVisit(std::vector<std::vector<uint32_t> > p_graph, uint32_t u, std::vect
 	p_node[u].color = GRAY;
 	for (auto &it : p_graph[u]) {
 		if (p_node[it].color == WHITE) {
+			//std::cout << it << std::endl;
 			p_node[u].num_child++;
 			p_node[it].predecessor = u;
 			dfsVisit(p_graph, it, p_node, p_low);
 			p_low[u] = std::min(p_low[u], p_low[it]);
+
+			// if (p_node[u].predecessor == -1 && p_node[u].num_child > 1) {
+			// 	std::cout << u << std::endl;
+			// }
+			// std::cout << it << " " << u << " " << p_low[it] << " " << p_node[u].discovery_time << std::endl;
+			// if (p_node[u].predecessor > -1 && p_low[it] >= p_node[u].discovery_time) {
+			// 	std::cout << u << std::endl;
+			// }
 		} else if (it != p_node[u].predecessor) {
 			p_low[u] = std::min(p_low[u], p_node[it].discovery_time);
 		}
@@ -107,7 +116,7 @@ int main() {
 	// for (auto i = 0; i < m_graph.size(); i++){
 	// 	std::cout << "Node Id=" << i << " DT=" << m_node[i].discovery_time << " FT=" << m_node[i].finish_time << "\n";
 	// }
-
+	//std::cout << std::endl << std::endl;
 	//print articulation point
 	for (auto i = 0; i < m_graph.size(); i++) {
 		if (m_node[i].predecessor == -1) {
@@ -115,18 +124,17 @@ int main() {
 				m_articulation.insert(i);
 			}
 		} else {
-			for (auto &it : m_graph[i]) {
-				if (m_low[it] >= m_node[i].discovery_time) {
-					m_articulation.insert(i);
-				}
+			//std::cout << i << " " << m_node[i].predecessor << " " << m_low[i] << " " << m_node[m_node[i].predecessor].discovery_time << std::endl;
+			if (m_node[m_node[i].predecessor].predecessor > -1 && m_low[i] >= m_node[m_node[i].predecessor].discovery_time) {
+				m_articulation.insert(m_node[i].predecessor);
 			}
 		}
 	}
 
-	for (auto i = 0; i < m_graph.size(); i++){
-		std::cout << "Node Id=" << i << ": ";
-		std::cout << m_low[i] << " " << m_node[i].discovery_time << " " << m_node[i].finish_time << "\n";
-	}
+	// for (auto i = 0; i < m_graph.size(); i++){
+	// 	std::cout << "Node Id=" << i << ": ";
+	// 	std::cout << m_low[i] << " " << m_node[i].discovery_time << " " << m_node[i].finish_time << "\n";
+	// }
 
 	//print articulation
 	std::cout << "Articulation vertex:\n";
