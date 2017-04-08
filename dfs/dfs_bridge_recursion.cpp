@@ -4,6 +4,7 @@
 #include <vector>
 #include <algorithm>
 #include <set>
+#include <stack>
 
 //Travel color, WHITE: unvisited, GRAY: visited but not finish, BLACK: finished
 enum eColor {
@@ -21,6 +22,8 @@ void print_graph(std::vector<std::vector<unsigned> > graph) {
 	}
 }
 
+std::stack<std::pair<uint32_t, uint32_t> > m_list_edge;
+std::set<std::pair<uint32_t, uint32_t> > m_bridge;
 uint32_t g_time = 0;
 //struct Node (Vertex)
 typedef struct sNode{
@@ -42,10 +45,29 @@ void dfsVisit(std::vector<std::vector<uint32_t> > p_graph, uint32_t u, std::vect
 		if (p_node[it].color == WHITE) {
 			p_node[u].num_child++;
 			p_node[it].predecessor = u;
+			//std::cout << "edges0: " << u << " " << it << std::endl;
+			m_list_edge.push(std::pair<uint32_t, uint32_t>(u, it));
 			dfsVisit(p_graph, it, p_node, p_low);
 			p_low[u] = std::min(p_low[u], p_low[it]);
+
+			if (p_low[it] > p_node[u].discovery_time) {
+				m_bridge.insert(std::pair<uint32_t, uint32_t>(u, it));
+				//std::cout << u << "-----" << it << " ";
+				auto l_pop = m_list_edge.top();
+				while (l_pop.first != u || l_pop.second != it) {
+					std::cout << l_pop.first << "--" << l_pop.second << " ";
+					m_list_edge.pop();
+					l_pop = m_list_edge.top();
+				}
+				//std::cout << l_pop.first << "--" << l_pop.second << " ";
+				m_list_edge.pop();
+				std::cout << std::endl;
+			}
+
 		} else if (it != p_node[u].predecessor) {
+			m_list_edge.push(std::pair<uint32_t, uint32_t>(u, it));
 			p_low[u] = std::min(p_low[u], p_node[it].discovery_time);
+			//std::cout << "edges1: " << u << " " << it << std::endl;
 		}
 	}
 	p_node[u].color = BLACK;
@@ -95,22 +117,32 @@ int main() {
 	//init vector of Node in graph by size
 	std::vector<sNode> m_node(m_graph.size());
 	std::vector<uint32_t> m_low(m_graph.size());
-	std::set<std::pair<uint32_t, uint32_t> > m_bridge;
+
 
 	for (auto i = 0; i < m_graph.size(); i++) {
 		if (m_node[i].color == WHITE) {
 			dfsVisit(m_graph, i, m_node, m_low);
 		}
+		while (!m_list_edge.empty()) {
+			auto l_pop = m_list_edge.top();
+			std::cout << l_pop.first << "--" << l_pop.second << " ";
+			m_list_edge.pop();
+		}
+		std::cout << std::endl;
 	}
 
-	//Find bridge
-	for (auto i = 0; i < m_graph.size(); i++) {
-		if (m_node[i].predecessor == -1)
-			continue;
-		if (m_low[i] > m_node[m_node[i].predecessor].discovery_time) {
-			m_bridge.insert(std::pair<uint32_t, uint32_t>(m_node[i].predecessor, i));
-		}
+	for (auto i = 0; i < m_graph.size(); i++){
+		std::cout << m_low[i] << " " << m_node[i].discovery_time << " " << m_node[i].finish_time << "\n";
 	}
+
+	// //Find bridge
+	// for (auto i = 0; i < m_graph.size(); i++) {
+	// 	if (m_node[i].predecessor == -1)
+	// 		continue;
+	// 	if (m_low[i] > m_node[m_node[i].predecessor].discovery_time) {
+	// 		m_bridge.insert(std::pair<uint32_t, uint32_t>(m_node[i].predecessor, i));
+	// 	}
+	// }
 
 	//print bridge
 	std::cout << "Bridge:\n";

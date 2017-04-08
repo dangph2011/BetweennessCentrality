@@ -79,6 +79,7 @@ int main() {
 	std::vector<sNode> m_node(m_graph.size());
 	std::set<uint32_t> m_articulation;
 	std::set<std::pair<uint32_t, uint32_t> > m_bridge;
+	std::stack<std::pair<uint32_t, uint32_t> > m_list_edge;
 
     std::stack<uint32_t> S;
 	bool check = true;
@@ -105,51 +106,84 @@ int main() {
 						m_node[it].low = m_node[it].discovery_time;
                         m_node[it].predecessor = u;
 						m_node[u].num_child++;
+						m_list_edge.push(std::pair<uint32_t, uint32_t>(u, it));
+						//std::cout << "edges0: " << u << " " << it << std::endl;
 						check = false;
 						break;
-                    } else if (it != m_node[u].predecessor) {
+                    } else if (it != m_node[u].predecessor && u != m_node[it].predecessor) {
+						//TODO check if u it is travelled
 						m_node[u].low = std::min(m_node[u].low, m_node[it].discovery_time);
+						m_list_edge.push(std::pair<uint32_t, uint32_t>(u, it));
+						//std::cout << "edges1: " << u << " " << it << std::endl;
 					}
                 }
 
 				if (check) {
-					S.pop();
 					if (m_node[u].color == GRAY) {
-						m_node[m_node[u].predecessor].low = std::min(m_node[m_node[u].predecessor].low, m_node[u].low);
 						m_node[u].color = BLACK;
                     	m_node[u].finish_time = ++g_time;
+						if (m_node[u].predecessor > -1) {
+
+							auto l_predecessor = m_node[u].predecessor;
+							m_node[l_predecessor].low = std::min(m_node[l_predecessor].low, m_node[u].low);
+
+							// std::cout << "edges1: " << u << " " << l_predecessor << std::endl;
+							// m_list_edge.push(std::pair<uint32_t, uint32_t>(u, l_predecessor));
+
+							if (l_predecessor > -1 && m_node[u].low > m_node[l_predecessor].discovery_time) {
+								m_bridge.insert(std::pair<uint32_t, uint32_t>(l_predecessor, u));
+
+								auto l_pop = m_list_edge.top();
+								while (l_pop.first != l_predecessor || l_pop.second != u) {
+									std::cout << l_pop.first << "--" << l_pop.second << " ";
+									m_list_edge.pop();
+									l_pop = m_list_edge.top();
+								}
+								//std::cout << l_pop.first << "--" << l_pop.second << " ";
+								m_list_edge.pop();
+								std::cout << std::endl;
+							}
+						}
 					}
+					S.pop();
 				}
             }
         }
+
+		while (!m_list_edge.empty()) {
+			auto l_pop = m_list_edge.top();
+			std::cout << l_pop.first << "--" << l_pop.second << " ";
+			m_list_edge.pop();
+		}
+		std::cout << std::endl;
 	}
 
 	//articulation vertex
-	for (auto i = 0; i < m_graph.size(); i++){
-		if (m_node[i].predecessor == -1) {
-			if (m_node[i].num_child > 1) {
-				m_articulation.insert(i);
-			}
-		} else {
-			//std::cout << i << " " << m_node[i].predecessor << " " << m_node[i].low << " " << m_node[m_node[i].predecessor].discovery_time << std::endl;
-			if (m_node[m_node[i].predecessor].predecessor > -1 && m_node[i].low >= m_node[m_node[i].predecessor].discovery_time) {
-				m_articulation.insert(m_node[i].predecessor);
-			}
-		}
-	}
-
 	// for (auto i = 0; i < m_graph.size(); i++){
-	// 	std::cout << m_node[i].low << " " << m_node[i].discovery_time << " " << m_node[i].finish_time << "\n";
+	// 	if (m_node[i].predecessor == -1) {
+	// 		if (m_node[i].num_child > 1) {
+	// 			m_articulation.insert(i);
+	// 		}
+	// 	} else {
+	// 		//std::cout << i << " " << m_node[i].predecessor << " " << m_node[i].low << " " << m_node[m_node[i].predecessor].discovery_time << std::endl;
+	// 		if (m_node[m_node[i].predecessor].predecessor > -1 && m_node[i].low >= m_node[m_node[i].predecessor].discovery_time) {
+	// 			m_articulation.insert(m_node[i].predecessor);
+	// 		}
+	// 	}
 	// }
 
-	//Find bridge
-	for (auto i = 0; i < m_graph.size(); i++) {
-		if (m_node[i].predecessor == -1)
-			continue;
-		if (m_node[i].low > m_node[m_node[i].predecessor].discovery_time) {
-			m_bridge.insert(std::pair<uint32_t, uint32_t>(m_node[i].predecessor, i));
-		}
+	for (auto i = 0; i < m_graph.size(); i++){
+		std::cout << m_node[i].low << " " << m_node[i].discovery_time << " " << m_node[i].finish_time << "\n";
 	}
+
+	//Find bridge
+	// for (auto i = 0; i < m_graph.size(); i++) {
+	// 	if (m_node[i].predecessor == -1)
+	// 		continue;
+	// 	if (m_node[i].low > m_node[m_node[i].predecessor].discovery_time) {
+	// 		m_bridge.insert(std::pair<uint32_t, uint32_t>(m_node[i].predecessor, i));
+	// 	}
+	// }
 
 	//print bridge
 	std::cout << "Bridge:\n";
