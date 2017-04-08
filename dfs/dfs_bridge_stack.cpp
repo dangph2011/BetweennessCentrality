@@ -82,11 +82,13 @@ int main() {
 	std::stack<std::pair<uint32_t, uint32_t> > m_list_edge;
 
     std::stack<uint32_t> S;
+	std::stack<uint32_t> m_node_component;
 	bool check = true;
 	for (auto i = 0; i < m_graph.size(); i++) {
         if (m_node[i].color == WHITE) {
             uint32_t s = i;
             S.push(s);
+			m_node_component.push(s);
             //std::cerr << "test\n";
 			m_node[s].color = GRAY;
 			m_node[s].discovery_time = ++g_time;
@@ -101,6 +103,7 @@ int main() {
                     if (m_node[it].color == WHITE) {
                         //m_node[it].discovery_time = ++g_time;
                         S.push(it);
+						m_node_component.push(it);
 						m_node[it].color = GRAY;
 						m_node[it].discovery_time = ++g_time;
 						m_node[it].low = m_node[it].discovery_time;
@@ -132,15 +135,27 @@ int main() {
 
 							if (l_predecessor > -1 && m_node[u].low > m_node[l_predecessor].discovery_time) {
 								m_bridge.insert(std::pair<uint32_t, uint32_t>(l_predecessor, u));
+								std::cout << "bridges: " << l_predecessor << "--" << u << " " << std::endl;
 
-								auto l_pop = m_list_edge.top();
-								while (l_pop.first != l_predecessor || l_pop.second != u) {
-									std::cout << l_pop.first << "--" << l_pop.second << " ";
+								auto l_pop_edge = m_list_edge.top();
+								while (l_pop_edge.first != l_predecessor || l_pop_edge.second != u) {
+									std::cout << l_pop_edge.first << "--" << l_pop_edge.second << " ";
 									m_list_edge.pop();
-									l_pop = m_list_edge.top();
+									l_pop_edge = m_list_edge.top();
 								}
-								//std::cout << l_pop.first << "--" << l_pop.second << " ";
+								//std::cout << l_pop_edge.first << "--" << l_pop_edge.second << " ";
 								m_list_edge.pop();
+								std::cout << std::endl;
+
+								//std::cout << "Node Component\n";
+								auto l_pop_node = m_node_component.top();
+								while (l_pop_node != l_predecessor && l_pop_node != u) {
+									std::cout << l_pop_node << " ";
+									m_node_component.pop();
+									l_pop_node = m_node_component.top();
+								}
+								std::cout << l_pop_node << " ";
+								m_node_component.pop();
 								std::cout << std::endl;
 							}
 						}
@@ -150,10 +165,20 @@ int main() {
             }
         }
 
+		//std::cout << "i=" << i << "\n";
 		while (!m_list_edge.empty()) {
-			auto l_pop = m_list_edge.top();
-			std::cout << l_pop.first << "--" << l_pop.second << " ";
+			auto l_pop_edge = m_list_edge.top();
+			std::cout << l_pop_edge.first << "--" << l_pop_edge.second << " ";
 			m_list_edge.pop();
+		}
+		std::cout << std::endl;
+
+		//std::cout << "Node Component\n";
+		//auto l_pop_node = m_node_component.top();
+		while (!m_node_component.empty()) {
+			auto l_pop_node = m_node_component.top();
+			std::cout << l_pop_node << " ";
+			m_node_component.pop();
 		}
 		std::cout << std::endl;
 	}
