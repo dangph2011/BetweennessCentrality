@@ -9,6 +9,8 @@
 #include <string>
 #include <sys/time.h>
 
+
+std::vector<double> g_bet_cen;
 //Travel color, WHITE: unvisited, GRAY: visited but not finish, BLACK: finished
 enum eColor {
 	WHITE,
@@ -62,16 +64,72 @@ typedef struct GraphConnected {
 	int32_t u_start;
 	//to graph
 	int32_t v_end;
+
+	bool traveled;
 	GraphConnected()
-	: graph_id(-1), u_start(-1), v_end(-1) {}
+	: graph_id(-1), u_start(-1), v_end(-1), traveled(false) {}
 
 	GraphConnected(int32_t p_graph_id, int32_t p_u_start, int32_t p_v_end) {
 		graph_id = p_graph_id;
 		u_start = p_u_start;
 		v_end = p_v_end;
+		traveled = false;
 	}
 
 }GraphConnected;
+
+class GraphComponent{
+	public:
+	std::vector<uint32_t> graph_id_;
+	std::vector<std::vector<uint32_t> > edge_list_;
+	bool directed_;
+	GraphComponent(bool p_directed = false) {
+		directed_ = p_directed;
+	}
+
+	void addEdge(uint32_t u, uint32_t v) {
+		if (edge_list_.size() < (u + 1)) {
+			edge_list_.resize(u + 1);
+		}
+		if (edge_list_.size() < (v + 1)) {
+			edge_list_.resize(v + 1);
+		}
+
+		edge_list_[u].push_back(v);
+		if (!directed_) {
+			edge_list_[v].push_back(u);
+		}
+	}
+
+	void delEdge(uint32_t u, uint32_t v) {
+		for (auto &it : edge_list_[u]) {
+			if (it == v) {
+				edge_list_[u].erase(edge_list_[u].begin() + (&it - &edge_list_[u][0]));
+				break;
+			}
+		}
+
+		if (!directed_) {
+			for (auto &it : edge_list_[v]) {
+				if (it == u) {
+					edge_list_[v].erase(edge_list_[v].begin() + (&it - &edge_list_[v][0]));
+					break;
+				}
+			}
+		}
+	}
+
+	//print graph
+    void printEdges() {
+		//
+		std::cout << "List Edges\n";
+    	for (auto &it : edge_list_){
+    		for (auto &it1 : it) {
+    			std::cout << &it - &edge_list_[0] << " " << it1 << std::endl;
+    		}
+    	}
+    }
+};
 
 class Graph{
 	public:
@@ -82,7 +140,8 @@ class Graph{
     std::vector<std::vector<uint32_t> > edge_list_;
     std::set<uint32_t> vertex_list_;
 	std::vector<uint32_t> reach_;
-	std::vector<GraphConnected> graph_connected_;
+	//relatively predecessor/parent
+	GraphConnected graph_connected_;
 	//int32_t v_connect_;
 
     bool directed_ = false;
@@ -95,6 +154,8 @@ class Graph{
 
 	Graph(uint32_t p_size) {
 		edge_list_.resize(p_size);
+		reach_.resize(p_size, 1);
+		//initReach();
 		graph_id_ = -1;
 		//v_connect_ = -1;
 		//graph_id_connect_ = -1;
@@ -102,10 +163,36 @@ class Graph{
 
     Graph(uint32_t p_size, uint32_t p_graph_id) {
 		edge_list_.resize(p_size);
+		//reach_.resize(p_size, 1);
 		graph_id_ = p_graph_id;
+
 		//v_connect_ = -1;
 		//graph_id_connect_ = -1;
     }
+
+	void initReach() {
+		for (auto &it : reach_) {
+			it = 1;
+		}
+	}
+
+	void setGraphConnected(uint32_t p_graph_id, uint32_t pu_start, uint32_t pv_end) {
+		graph_connected_.graph_id = p_graph_id;
+		graph_connected_.u_start = pu_start;
+		graph_connected_.v_end = pv_end;
+	}
+
+	void setGraphConnectedId(uint32_t p_graph_id) {
+		graph_connected_.graph_id = p_graph_id;
+	}
+
+	uint32_t getTotalReach() {
+		uint32_t total = 0;
+		for (auto &it : vertex_list_) {
+			total += reach_[it];
+		}
+		return total;
+	}
 
     uint32_t getNumberOfVectex() {
         return vertex_list_.size();
@@ -139,26 +226,47 @@ class Graph{
 		graph_id_ = p_id;
 	}
 
-	void initAndSetReach() {
-		reach_.resize(edge_list_.size());
-		for (auto &it : reach_) {
-			it = 1;
+	void setReach(uint32_t p_vertex, uint32_t p_value) {
+		if (reach_.size() < p_vertex) {
+			reach_.resize(p_vertex+1, 1);
 		}
+		reach_[p_vertex] = p_value;
 	}
 
+	uint32_t getReach(uint32_t p_vertex) {
+		return reach_[p_vertex];
+	}
+
+	// void initAndSetReach() {
+	// 	reach_.resize(edge_list_.size());
+	// 	for (auto &it : reach_) {
+	// 		it = 1;
+	// 	}
+	// }
+
 	void addVertex(uint32_t u) {
+		if (edge_list_.size() < (u + 1)) {
+			edge_list_.resize(u + 1);
+		}
+		if (reach_.size() < (u + 1)){
+			reach_.resize(u+1);
+		}
 		vertex_list_.insert(u);
 	}
 
 	void addEdge(uint32_t u, uint32_t v) {
 		if (edge_list_.size() < (u + 1)) {
 			edge_list_.resize(u + 1);
+			reach_.resize(u + 1, 1);
 		}
 		if (edge_list_.size() < (v + 1)) {
 			edge_list_.resize(v + 1);
+			reach_.resize(v + 1, 1);
 		}
 
 		edge_list_[u].push_back(v);
+		//reach_[u] = 1;
+		//reach_[v] = 1;
 		if (!directed_) {
 			edge_list_[v].push_back(u);
 		}
@@ -199,9 +307,7 @@ class Graph{
 
 	//print Vertex, Edge and graph Id connected
 	void printBridgeInfo(){
-		for (auto &it : graph_connected_) {
-			std::cout << "GraphID=" << it.graph_id << " Start=" << it.u_start << " End=" << it.v_end << std::endl;
-		}
+		std::cout << "GraphID=" << graph_connected_.graph_id << " Start=" << graph_connected_.u_start << " End=" << graph_connected_.v_end << std::endl;
 	}
 
     //print graph
@@ -227,7 +333,7 @@ class Graph{
 		//
 		std::cout << "List Vertices\n";
     	for (auto &it : vertex_list_){
-    		std::cout << it << std::endl;
+    		std::cout << it << " " << reach_[it] << std::endl;
     	}
     }
 };
@@ -256,17 +362,22 @@ bool readEdgeList(Graph &g, std::string p_file_name, bool p_directed = false){
 		//std::cout << graph.size();
 		if (g.edge_list_.size() < (it.first + 1)) {
 			g.edge_list_.resize(it.first + 1);
+			g.reach_.resize(it.first + 1, 1);
 		}
 		if (g.edge_list_.size() < (it.second + 1)) {
 			g.edge_list_.resize(it.second + 1);
+			g.reach_.resize(it.second + 1, 1);
 		}
 
 		g.edge_list_[it.first].push_back(it.second);
+		//g.reach_[it.first] = 1;
+		//g.reach_[it.second] = 1;
 		if (!g.directed_) {
 			g.edge_list_[it.second].push_back(it.first);
 		}
 	}
 
+	//g.initAndSetReach();
 	// //sort adjacency list
 	g.sortAndRemoveDuplicateEdges();
 	// for (auto &it : g.edge_list_) {
@@ -291,16 +402,22 @@ bool readMetis(Graph &g, std::string p_file_name, bool p_directed = false) {
 	iss1 >> g.v_num_ >> g.e_num_;
 	//std::cout << "Vertex=" << v_num_ << " Edge=" << e_num_ << std::endl;
 	g.edge_list_.resize(g.v_num_+1);
+	g.reach_.resize(g.v_num_+1, 1);
 	//std::cout << "Vertex=" << v_num_ << " Edge=" << e_num_ << std::endl;
 	while (getline(f_in, line)) {
 		std::istringstream iss(line);
 		//std::cout << "Line=" << line << std::endl;
+		if (!line.empty()) {
+			g.vertex_list_.insert(count);
+			//g.reach_[count] = 1;
+		}
+
 		while (iss >> v) {
 			//std::cout << "\tv=" << v << " " << std::endl;
-			g.vertex_list_.insert(count);
-			g.vertex_list_.insert(count);
-
+			//g.vertex_list_.insert(count);
+			g.vertex_list_.insert(v);
 			g.edge_list_[count].push_back(v);
+			//g.reach_[v] = 1;
 			if (!g.directed_) {
 				g.edge_list_[v].push_back(count);
 			}
@@ -310,6 +427,7 @@ bool readMetis(Graph &g, std::string p_file_name, bool p_directed = false) {
 		//std::cout << count << "\n";
 	}
 
+	//g.initAndSetReach();
 	//sort and erase duplicate
 	g.sortAndRemoveDuplicateEdges();
 	// for (auto &it : g.edge_list_) {
@@ -330,7 +448,7 @@ void betweennessCentrality(Graph &g, std::vector<double> &l_bet_cen) {
 	}
 
 	//travel all vectice
-	for (size_t i = 0; i < g.edge_list_.size(); i++) {
+	for (auto &i : g.vertex_list_) {
 		//for (size_t j = 0; j < vertex_list_[i].size(); j++) {
 			uint32_t s = i;
 			//std::cerr << vertex_list_.size() << std::endl;
@@ -417,20 +535,23 @@ bool dfsTravelBridge(Graph &g, std::set<std::pair<uint32_t, uint32_t> > &p_bridg
 	std::vector<Vertex> l_node(g.edge_list_.size());
 	std::stack<std::pair<uint32_t, uint32_t> > m_list_edge;
 	std::stack<uint32_t> m_node_component;
-	uint32_t l_graph_shatter_size = 0;
+	uint32_t l_graph_shatter_size = p_graph_shatter.size();
 	std::vector<std::vector<uint32_t> > l_graph_id(g.edge_list_.size());
 
 	std::stack<uint32_t> S;
 	uint32_t m_num_tree_node;
 	bool check = true;
 	for (auto i = 0; i < g.edge_list_.size(); i++) {
+		//uint32_t l_graph_shatter_size = p_graph_shatter.size();
 		m_num_tree_node = g_time;
 		std::vector<Graph> l_graph;
+		//GraphComponent l_graph_component;
 		if (l_node[i].color == WHITE) {
 			//m_num_tree_node++;
 			uint32_t s = i;
 			S.push(s);
 			m_node_component.push(s);
+			//std::cout << "PUSH=" << s << std::endl;
 			//std::cerr << "test\n";
 			l_node[s].color = GRAY;
 			l_node[s].discovery_time = ++g_time;
@@ -446,6 +567,7 @@ bool dfsTravelBridge(Graph &g, std::set<std::pair<uint32_t, uint32_t> > &p_bridg
 						//l_node[it].discovery_time = ++g_time;
 						S.push(it);
 						m_node_component.push(it);
+						//std::cout << "PUSH=" << it << std::endl;
 						l_node[it].color = GRAY;
 						l_node[it].discovery_time = ++g_time;
 						l_node[it].low = l_node[it].discovery_time;
@@ -493,18 +615,12 @@ bool dfsTravelBridge(Graph &g, std::set<std::pair<uint32_t, uint32_t> > &p_bridg
 								auto l_pop_node = m_node_component.top();
 								while (l_pop_node != u) {
 									l_g.addVertex(l_pop_node);
+									l_g.setReach(l_pop_node, g.getReach(l_pop_node));
+									//std::cout << "-----" << l_pop_node << "---" << g.getReach(l_pop_node) << std::endl;
 									//find if node belong one bridge
 									if (!l_graph_id[l_pop_node].empty()) {
 										for (auto &it : l_graph_id[l_pop_node]) {
-											for (auto &graph_connected : l_graph[it].graph_connected_) {
-												if (graph_connected.v_end == l_pop_node) {
-													//update graph id connected by bridge
-													graph_connected.graph_id = l_graph_shatter_size;
-													GraphConnected k_graph_connect(l_graph[it].getGraphId(), graph_connected.v_end, graph_connected.u_start);
-													l_g.graph_connected_.push_back(k_graph_connect);
-													break;
-												}
-											}
+											l_graph[it].setGraphConnectedId(l_graph_shatter_size);
 										}
 									}
 									m_node_component.pop();
@@ -514,14 +630,24 @@ bool dfsTravelBridge(Graph &g, std::set<std::pair<uint32_t, uint32_t> > &p_bridg
 								l_graph_id[l_predecessor].push_back(l_graph_shatter_size);
 
 								l_g.addVertex(l_pop_node);
+								l_g.setReach(l_pop_node, g.getReach(l_pop_node));
+								std::cout << "-----" << l_pop_node << "---" << g.getReach(l_pop_node) << std::endl;
+								//l_g.reach_[l_pop_node] = g.reach_[l_pop_node];
+								if (!l_graph_id[l_pop_node].empty()) {
+									for (auto &it : l_graph_id[l_pop_node]) {
+										l_graph[it].setGraphConnectedId(l_graph_shatter_size);
+									}
+								}
 								//have yet what graph to connect
-								GraphConnected t_graph_connect(-1, l_pop_node, l_predecessor);
-								l_g.graph_connected_.push_back(t_graph_connect);
+								//GraphConnected t_graph_connect(-1, l_pop_node, l_predecessor);
+								l_g.setGraphConnected(-1, l_pop_node, l_predecessor);
+
 								//l_g.setVConnect(l_pop_node);
 								m_node_component.pop();
 								//std::cout << std::endl;
 								l_g.sortAndRemoveDuplicateEdges();
 								l_graph.push_back(l_g);
+								//std::cout << l_g.getGraphId();
 								//Increase version
 								l_graph_shatter_size++;
 							}
@@ -532,8 +658,15 @@ bool dfsTravelBridge(Graph &g, std::set<std::pair<uint32_t, uint32_t> > &p_bridg
 			}
 		}
 
-		if (!m_node_component.empty() && !m_list_edge.empty()) {
+		//std::cout << "i=" << i << " PUSH=" << m_node_component.empty() << std::endl;
+		// while (!m_node_component.empty()) {
+		// 	std::cout << m_node_component.top();
+		// 	m_node_component.pop();
+		// }
+		// std::cout << "i=------\n";
+		if (!m_node_component.empty() || !m_list_edge.empty()) {
 			Graph l_g(g.edge_list_.size(),l_graph_shatter_size);
+
 			while (!m_list_edge.empty()) {
 				auto l_pop_edge = m_list_edge.top();
 				l_g.addEdge(l_pop_edge.first, l_pop_edge.second);
@@ -547,31 +680,62 @@ bool dfsTravelBridge(Graph &g, std::set<std::pair<uint32_t, uint32_t> > &p_bridg
 				auto l_pop_node = m_node_component.top();
 				//std::cout << l_pop_node << " ";
 				l_g.addVertex(l_pop_node);
+				//l_g.reach_[l_pop_node] = g.reach_[l_pop_node];
+				l_g.setReach(l_pop_node, g.getReach(l_pop_node));
+				std::cout << "-----" << l_pop_node << "---" << g.getReach(l_pop_node) << std::endl;
 				if (!l_graph_id[l_pop_node].empty()) {
 					for (auto &it : l_graph_id[l_pop_node]) {
-						for (auto &graph_connected : l_graph[it].graph_connected_) {
-							if (graph_connected.v_end == l_pop_node) {
-								//update graph id connected by bridge
-								graph_connected.graph_id = l_graph_shatter_size;
-								GraphConnected k_graph_connect(l_graph[it].getGraphId(), graph_connected.v_end, graph_connected.u_start);
-								l_g.graph_connected_.push_back(k_graph_connect);
-								break;
-							}
-						}
+						l_graph[it].setGraphConnectedId(l_graph_shatter_size);
 					}
 				}
 				m_node_component.pop();
 			}
+
 			l_g.sortAndRemoveDuplicateEdges();
 			l_graph.push_back(l_g);
 			l_graph_shatter_size++;
 		}
 
 		m_num_tree_node = g_time - m_num_tree_node;
-		// for (auto i = 0; i < l_graph.size(); i++) {
+		//Update Reach for each graph component
+		// for (int i = 0; i < l_graph.size(); i++) {
+		// 	auto total = l_graph[i].getReach();
+		// 	for (auto &graph_connected : l_graph[i].graph_connected_) {
+		// 		auto t_graph_id = graph_connected.graph_id;
 		//
+		//
+		// 	}
 		// }
-		p_graph_shatter.insert(p_graph_shatter.begin(), l_graph.begin(), l_graph.end());
+
+		std::stack<uint32_t> s_graph;
+
+		//TODO: Update reach for each graph shattered
+		uint32_t f_total_reach_g1;
+		uint32_t f_total_reach_g2;
+		if (l_graph.size() > 1) {
+			for (int i = 0; i < l_graph.size() - 1; i++) {
+				f_total_reach_g1 = l_graph[i].getTotalReach();
+				f_total_reach_g2 = 0;
+				for (int j = i+1; j < l_graph.size(); j++) {
+					f_total_reach_g2 += l_graph[j].getTotalReach();
+					std::cout << "G2 " << j  << " " << l_graph[j].getTotalReach() << std::endl;
+				}
+				auto u_bridge = l_graph[i].graph_connected_.u_start;
+				auto v_bridge = l_graph[i].graph_connected_.v_end;
+				auto u_new_reach = l_graph[i].getReach(u_bridge) + f_total_reach_g2;
+				auto v_new_reach = l_graph[l_graph[i].graph_connected_.graph_id].getReach(v_bridge) + f_total_reach_g1;
+
+				std::cout << "G1 " << i << " " << l_graph.size() << " " << " GraphConnecte=" << l_graph[i].graph_connected_.graph_id << std::endl ;
+				//Update reach bridge
+				l_graph[i].setReach(u_bridge, u_new_reach);
+				l_graph[l_graph[i].graph_connected_.graph_id].setReach(v_bridge, v_new_reach);
+			}
+		}
+
+		p_graph_shatter.insert(p_graph_shatter.end(), l_graph.begin(), l_graph.end());
+		//spanning tree graph.
+		//std::cout << "Spanning Tree\n";
+		//l_graph_component.printEdges();
 
 		//std::cout << "Number Of Tree Node=" << m_num_tree_node << std::endl;
 	}
@@ -655,6 +819,10 @@ int main() {
     if (!readEdgeList(g,"../data/test2.txt", false)) {
         return 0;
     }
+	g_bet_cen.resize(g.edge_list_.size());
+	for (auto &it : g_bet_cen) {
+		it = 0;
+	}
 
 	//Read motis format
 	// if (!readMetis(g, "../data/cond-mat.graph", false)) {
@@ -708,6 +876,7 @@ int main() {
 					std::cout << "Graph ID=" << it.getGraphId() <<"\n";
 					it.printGraph();
 					it.printBridgeInfo();
+					std::cout << "Total reach=" << it.getTotalReach() << std::endl;
 					std::cout << "----------\n";
 				}
 
