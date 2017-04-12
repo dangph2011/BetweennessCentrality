@@ -440,12 +440,12 @@ bool readMetis(Graph &g, std::string p_file_name, bool p_directed = false) {
 }
 
 void betweennessCentrality(Graph &g, std::vector<double> &l_bet_cen) {
-	l_bet_cen.resize(g.edge_list_.size());
+	//l_bet_cen.resize(g.edge_list_.size());
 
 	//set all the value of betweenness centrality of all vectices equal to 0 before computing
-	for (auto &it : l_bet_cen){
-		it = 0;
-	}
+	// for (auto &it : l_bet_cen){
+	// 	it = 0;
+	// }
 
 	//travel all vectice
 	for (auto &i : g.vertex_list_) {
@@ -500,9 +500,10 @@ void betweennessCentrality(Graph &g, std::vector<double> &l_bet_cen) {
 			}
 
 			std::vector<double> dependency(g.edge_list_.size());
-			for (auto &it : dependency) {
-				it = 0;
+			for (auto j = 0; j < dependency.size(); j++) {
+				dependency[j] = g.getReach(j) - 1;
 			}
+
 			//S returns vertices in order of non-increasing distance from s
 			while (!S.empty()) {
 				uint32_t w = S.top();
@@ -513,18 +514,18 @@ void betweennessCentrality(Graph &g, std::vector<double> &l_bet_cen) {
 				}
 
 				if (w != s) {
-					l_bet_cen[w] += dependency[w];
+					l_bet_cen[w] += dependency[w] * g.getReach(s);
 				}
 			}
 			delete [] check_map;
 	}
 
 	// divide by 2 for undirected graph
-	if (!g.directed_) {
-		for (auto &it : l_bet_cen) {
-			it /= 2;
-		}
-	}
+	// if (!g.directed_) {
+	// 	for (auto &it : l_bet_cen) {
+	// 		it /= 2;
+	// 	}
+	// }
 	//return l_bet_cen;
 }
 
@@ -541,7 +542,7 @@ bool dfsTravelBridge(Graph &g, std::set<std::pair<uint32_t, uint32_t> > &p_bridg
 	std::stack<uint32_t> S;
 	uint32_t m_num_tree_node;
 	bool check = true;
-	for (auto i = 0; i < g.edge_list_.size(); i++) {
+	for (auto &i : g.vertex_list_) {
 		//uint32_t l_graph_shatter_size = p_graph_shatter.size();
 		m_num_tree_node = g_time;
 		std::vector<Graph> l_graph;
@@ -697,17 +698,6 @@ bool dfsTravelBridge(Graph &g, std::set<std::pair<uint32_t, uint32_t> > &p_bridg
 		}
 
 		m_num_tree_node = g_time - m_num_tree_node;
-		//Update Reach for each graph component
-		// for (int i = 0; i < l_graph.size(); i++) {
-		// 	auto total = l_graph[i].getReach();
-		// 	for (auto &graph_connected : l_graph[i].graph_connected_) {
-		// 		auto t_graph_id = graph_connected.graph_id;
-		//
-		//
-		// 	}
-		// }
-
-		std::stack<uint32_t> s_graph;
 
 		//TODO: Update reach for each graph shattered
 		uint32_t f_total_reach_g1;
@@ -726,9 +716,14 @@ bool dfsTravelBridge(Graph &g, std::set<std::pair<uint32_t, uint32_t> > &p_bridg
 				auto v_new_reach = l_graph[l_graph[i].graph_connected_.graph_id].getReach(v_bridge) + f_total_reach_g1;
 
 				std::cout << "G1 " << i << " " << l_graph.size() << " " << " GraphConnecte=" << l_graph[i].graph_connected_.graph_id << std::endl ;
+
 				//Update reach bridge
 				l_graph[i].setReach(u_bridge, u_new_reach);
 				l_graph[l_graph[i].graph_connected_.graph_id].setReach(v_bridge, v_new_reach);
+
+				//Update BC score
+				g_bet_cen[u_bridge] += (f_total_reach_g1 - 1) * f_total_reach_g2;
+				g_bet_cen[v_bridge] += (f_total_reach_g2 - 1) * f_total_reach_g1;
 			}
 		}
 
@@ -819,10 +814,7 @@ int main() {
     if (!readEdgeList(g,"../data/test2.txt", false)) {
         return 0;
     }
-	g_bet_cen.resize(g.edge_list_.size());
-	for (auto &it : g_bet_cen) {
-		it = 0;
-	}
+	g_bet_cen.resize(g.edge_list_.size(), 0);
 
 	//Read motis format
 	// if (!readMetis(g, "../data/cond-mat.graph", false)) {
@@ -865,25 +857,26 @@ int main() {
             {
 				double start_time_bridge = getCurrentTimeMlsec();
                 std::set<std::pair<uint32_t, uint32_t> > m_bridge;
-				std::vector<Graph> m_graph_shatter;
+				//std::vector<Graph> m_graph_shatter;
 				//m_graph_shatter.push_back(g);
+				//m_graph_shatter.clear();
 				dfsTravelBridge(g, m_bridge, m_graph_shatter);
                 //print bridge
-				std::cout << "SIZE SHATTER=" << m_graph_shatter.size() << "\n";
-
-				for (auto &it : m_graph_shatter) {
-					//std::cout << &it - &m_graph_shatter[0] << "\n";
-					std::cout << "Graph ID=" << it.getGraphId() <<"\n";
-					it.printGraph();
-					it.printBridgeInfo();
-					std::cout << "Total reach=" << it.getTotalReach() << std::endl;
-					std::cout << "----------\n";
-				}
-
-				std::cout << "Bridge:\n";
-            	for (auto &it : m_bridge){
-            		std::cout << "\t" << it.first << " " << it.second << "\n";
-            	}
+				// std::cout << "SIZE SHATTER=" << m_graph_shatter.size() << "\n";
+				//
+				// for (auto &it : m_graph_shatter) {
+				// 	//std::cout << &it - &m_graph_shatter[0] << "\n";
+				// 	std::cout << "Graph ID=" << it.getGraphId() <<"\n";
+				// 	it.printGraph();
+				// 	it.printBridgeInfo();
+				// 	std::cout << "Total reach=" << it.getTotalReach() << std::endl;
+				// 	std::cout << "----------\n";
+				// }
+				//
+				// std::cout << "Bridge:\n";
+            	// for (auto &it : m_bridge){
+            	// 	std::cout << "\t" << it.first << " " << it.second << "\n";
+            	// }
 				std::cout << "Time Bridge=" << getCurrentTimeMlsec() - start_time_bridge << "\n";
 				//option = 0;
 				break;
@@ -892,11 +885,19 @@ int main() {
             case 3:
             {
 				double start_time_bc = getCurrentTimeMlsec();
-                std::vector<double> m_bet_cen;
-				betweennessCentrality(g, m_bet_cen);
+                //std::vector<double> m_bet_cen;
+				for (auto &it : m_graph_shatter) {
+					betweennessCentrality(it, g_bet_cen);
+				}
+				if (!g.getDirected()) {
+					for (auto & it : g_bet_cen){
+		            	it /= 2;
+	            	}
+				}
+
                 std::cout << std::fixed << std::setprecision(6);
             	//print betweenness centrality value
-            	for (auto & it : m_bet_cen){
+            	for (auto & it : g_bet_cen){
             		std::cout << it << std::endl;
             	}
 				std::cout << "Time betweenness centrality=" << getCurrentTimeMlsec() - start_time_bc<< "\n";
