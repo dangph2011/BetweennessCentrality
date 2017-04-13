@@ -8,6 +8,7 @@
 #include <sstream>
 #include <string>
 #include <sys/time.h>
+#include <unistd.h>
 
 
 std::vector<double> g_bet_cen;
@@ -163,7 +164,7 @@ class Graph{
 
     Graph(uint32_t p_size, uint32_t p_graph_id) {
 		edge_list_.resize(p_size);
-		//reach_.resize(p_size, 1);
+		reach_.resize(p_size, 1);
 		graph_id_ = p_graph_id;
 
 		//v_connect_ = -1;
@@ -248,9 +249,11 @@ class Graph{
 		if (edge_list_.size() < (u + 1)) {
 			edge_list_.resize(u + 1);
 		}
+
 		if (reach_.size() < (u + 1)){
-			reach_.resize(u+1);
+			reach_.resize(u+1, 1);
 		}
+
 		vertex_list_.insert(u);
 	}
 
@@ -536,16 +539,20 @@ bool dfsTravelBridge(Graph &g, std::set<std::pair<uint32_t, uint32_t> > &p_bridg
 	std::vector<Vertex> l_node(g.edge_list_.size());
 	std::stack<std::pair<uint32_t, uint32_t> > m_list_edge;
 	std::stack<uint32_t> m_node_component;
+	uint32_t l_graph_shatter_size_begin = p_graph_shatter.size();
 	uint32_t l_graph_shatter_size = p_graph_shatter.size();
+
 	std::vector<std::vector<uint32_t> > l_graph_id(g.edge_list_.size());
 
 	std::stack<uint32_t> S;
 	uint32_t m_num_tree_node;
 	bool check = true;
+
 	for (auto &i : g.vertex_list_) {
-		//uint32_t l_graph_shatter_size = p_graph_shatter.size();
+		//l_graph_shatter_size_start = p_graph_shatter.size();
+		//l_graph_shatter_size_start = p_graph_shatter.size();
 		m_num_tree_node = g_time;
-		std::vector<Graph> l_graph;
+		//std::vector<Graph> l_graph;
 		//GraphComponent l_graph_component;
 		if (l_node[i].color == WHITE) {
 			//m_num_tree_node++;
@@ -598,6 +605,7 @@ bool dfsTravelBridge(Graph &g, std::set<std::pair<uint32_t, uint32_t> > &p_bridg
 
 								//Init graph with current version
 								Graph l_g(g.edge_list_.size(), l_graph_shatter_size);
+
 								//add edges into graph
 								auto l_pop_edge = m_list_edge.top();
 								//check if edge pop not bridge
@@ -616,12 +624,14 @@ bool dfsTravelBridge(Graph &g, std::set<std::pair<uint32_t, uint32_t> > &p_bridg
 								auto l_pop_node = m_node_component.top();
 								while (l_pop_node != u) {
 									l_g.addVertex(l_pop_node);
+									std::cout << "5--" << l_pop_node << "--" << g.edge_list_.size() << std::endl;
 									l_g.setReach(l_pop_node, g.getReach(l_pop_node));
+									std::cout << "6--" << l_pop_node << "--" << g.edge_list_.size() << std::endl;
 									//std::cout << "-----" << l_pop_node << "---" << g.getReach(l_pop_node) << std::endl;
 									//find if node belong one bridge
 									if (!l_graph_id[l_pop_node].empty()) {
-										for (auto &it : l_graph_id[l_pop_node]) {
-											l_graph[it].setGraphConnectedId(l_graph_shatter_size);
+										for (auto &it_li : l_graph_id[l_pop_node]) {
+											p_graph_shatter[it_li].setGraphConnectedId(l_graph_shatter_size);
 										}
 									}
 									m_node_component.pop();
@@ -631,12 +641,14 @@ bool dfsTravelBridge(Graph &g, std::set<std::pair<uint32_t, uint32_t> > &p_bridg
 								l_graph_id[l_predecessor].push_back(l_graph_shatter_size);
 
 								l_g.addVertex(l_pop_node);
+								std::cout << "0--" << l_pop_node << "--" << l_g.graph_id_  << " " << l_graph_shatter_size << std::endl;
 								l_g.setReach(l_pop_node, g.getReach(l_pop_node));
-								std::cout << "-----" << l_pop_node << "---" << g.getReach(l_pop_node) << std::endl;
+								std::cout << "1--" << l_pop_node << "--" << l_g.graph_id_ << " " << l_graph_shatter_size << std::endl;
 								//l_g.reach_[l_pop_node] = g.reach_[l_pop_node];
 								if (!l_graph_id[l_pop_node].empty()) {
-									for (auto &it : l_graph_id[l_pop_node]) {
-										l_graph[it].setGraphConnectedId(l_graph_shatter_size);
+									for (auto &it_li : l_graph_id[l_pop_node]) {
+										std::cout << "2-LgraphId=" << it_li << " " << l_graph_shatter_size << std::endl;
+										p_graph_shatter[it_li].setGraphConnectedId(l_graph_shatter_size);
 									}
 								}
 								//have yet what graph to connect
@@ -647,7 +659,7 @@ bool dfsTravelBridge(Graph &g, std::set<std::pair<uint32_t, uint32_t> > &p_bridg
 								m_node_component.pop();
 								//std::cout << std::endl;
 								l_g.sortAndRemoveDuplicateEdges();
-								l_graph.push_back(l_g);
+								p_graph_shatter.push_back(l_g);
 								//std::cout << l_g.getGraphId();
 								//Increase version
 								l_graph_shatter_size++;
@@ -682,18 +694,20 @@ bool dfsTravelBridge(Graph &g, std::set<std::pair<uint32_t, uint32_t> > &p_bridg
 				//std::cout << l_pop_node << " ";
 				l_g.addVertex(l_pop_node);
 				//l_g.reach_[l_pop_node] = g.reach_[l_pop_node];
+				std::cout << "3--" << l_pop_node << "--" << l_g.graph_id_ << " " << l_graph_shatter_size << std::endl;
 				l_g.setReach(l_pop_node, g.getReach(l_pop_node));
-				std::cout << "-----" << l_pop_node << "---" << g.getReach(l_pop_node) << std::endl;
+				std::cout << "4--" << l_pop_node << "--" << l_g.graph_id_ << " " << l_graph_shatter_size  << " " << l_graph_id[l_pop_node].size() << std::endl;
 				if (!l_graph_id[l_pop_node].empty()) {
-					for (auto &it : l_graph_id[l_pop_node]) {
-						l_graph[it].setGraphConnectedId(l_graph_shatter_size);
+					for (auto &it_li : l_graph_id[l_pop_node]) {
+						std::cout << "1-LgraphId=" << it_li << " " << l_graph_shatter_size << std::endl;
+						p_graph_shatter[it_li].setGraphConnectedId(l_graph_shatter_size);
 					}
 				}
 				m_node_component.pop();
 			}
 
 			l_g.sortAndRemoveDuplicateEdges();
-			l_graph.push_back(l_g);
+			p_graph_shatter.push_back(l_g);
 			l_graph_shatter_size++;
 		}
 
@@ -702,24 +716,31 @@ bool dfsTravelBridge(Graph &g, std::set<std::pair<uint32_t, uint32_t> > &p_bridg
 		//TODO: Update reach for each graph shattered
 		uint32_t f_total_reach_g1;
 		uint32_t f_total_reach_g2;
-		if (l_graph.size() > 1) {
-			for (int i = 0; i < l_graph.size() - 1; i++) {
-				f_total_reach_g1 = l_graph[i].getTotalReach();
-				f_total_reach_g2 = 0;
-				for (int j = i+1; j < l_graph.size(); j++) {
-					f_total_reach_g2 += l_graph[j].getTotalReach();
-					std::cout << "G2 " << j  << " " << l_graph[j].getTotalReach() << std::endl;
-				}
-				auto u_bridge = l_graph[i].graph_connected_.u_start;
-				auto v_bridge = l_graph[i].graph_connected_.v_end;
-				auto u_new_reach = l_graph[i].getReach(u_bridge) + f_total_reach_g2;
-				auto v_new_reach = l_graph[l_graph[i].graph_connected_.graph_id].getReach(v_bridge) + f_total_reach_g1;
+		//uint32_t f_new_graph = l_graph_shatter_size - l_graph_shatter_size_begin;
 
-				std::cout << "G1 " << i << " " << l_graph.size() << " " << " GraphConnecte=" << l_graph[i].graph_connected_.graph_id << std::endl ;
+		//Only recalculate reach if origin graph forms 2 graphs ( bridge exists)
+		if (l_graph_shatter_size - l_graph_shatter_size_begin > 1 ) {
+			for (int i = l_graph_shatter_size_begin; i < l_graph_shatter_size - 1; i++) {
+				f_total_reach_g1 = p_graph_shatter[i].getTotalReach();
+				f_total_reach_g2 = 0;
+				for (int j = i+1; j < l_graph_shatter_size; j++) {
+					f_total_reach_g2 += p_graph_shatter[j].getTotalReach();
+					//std::cout << "G2 " << j  << " " << l_graph[j].getTotalReach() << std::endl;
+				}
+
+				auto u_bridge = p_graph_shatter[i].graph_connected_.u_start;
+				auto v_bridge = p_graph_shatter[i].graph_connected_.v_end;
+				std::cout << "G1 " << i << " GraphId= " << p_graph_shatter[i].graph_id_ << " " << l_graph_shatter_size - l_graph_shatter_size_begin  << " " << " GraphConnected=" << p_graph_shatter[i].graph_connected_.graph_id << " size reach=" << p_graph_shatter[i].reach_.size() << std::endl;
+				std::cout << "G2 " << i << " GraphId= " << p_graph_shatter[i+1].graph_id_ << " " << l_graph_shatter_size - l_graph_shatter_size_begin << " " << " GraphConnected=" << p_graph_shatter[i+1].graph_connected_.graph_id << " size reach=" << p_graph_shatter[i+1].reach_.size() << std::endl;
+				std::cout << "UB=" << u_bridge << " VB=" << v_bridge << " IREACH=" << p_graph_shatter[i].reach_.size() << " PIREACH=" << p_graph_shatter[p_graph_shatter[i].graph_connected_.graph_id].reach_.size() << std::endl;
+				auto u_new_reach = p_graph_shatter[i].getReach(u_bridge) + f_total_reach_g2;
+				auto v_new_reach = p_graph_shatter[p_graph_shatter[i].graph_connected_.graph_id].getReach(v_bridge) + f_total_reach_g1;
+
+				//std::cout << "G1 " << i << " " << l_graph.size() << " " << " GraphConnecte=" << l_graph[i].graph_connected_.graph_id << std::endl ;
 
 				//Update reach bridge
-				l_graph[i].setReach(u_bridge, u_new_reach);
-				l_graph[l_graph[i].graph_connected_.graph_id].setReach(v_bridge, v_new_reach);
+				p_graph_shatter[i].setReach(u_bridge, u_new_reach);
+				p_graph_shatter[p_graph_shatter[i].graph_connected_.graph_id].setReach(v_bridge, v_new_reach);
 
 				//Update BC score
 				g_bet_cen[u_bridge] += (f_total_reach_g1 - 1) * f_total_reach_g2;
@@ -727,12 +748,8 @@ bool dfsTravelBridge(Graph &g, std::set<std::pair<uint32_t, uint32_t> > &p_bridg
 			}
 		}
 
-		p_graph_shatter.insert(p_graph_shatter.end(), l_graph.begin(), l_graph.end());
-		//spanning tree graph.
-		//std::cout << "Spanning Tree\n";
-		//l_graph_component.printEdges();
-
-		//std::cout << "Number Of Tree Node=" << m_num_tree_node << std::endl;
+		l_graph_shatter_size_begin = l_graph_shatter_size;
+		//p_graph_shatter.insert(p_graph_shatter.end(), l_graph.begin(), l_graph.end());
 	}
 
 	return true;
@@ -814,6 +831,7 @@ int main() {
     if (!readEdgeList(g,"../data/test2.txt", false)) {
         return 0;
     }
+	//std::cout << "SIZE=" << g.edge_list_.size() << std::endl;
 	g_bet_cen.resize(g.edge_list_.size(), 0);
 
 	//Read motis format
