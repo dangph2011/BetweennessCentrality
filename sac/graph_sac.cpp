@@ -545,13 +545,13 @@ bool dfsTravelBridge(Graph &g, std::set<std::pair<uint32_t, uint32_t> > &p_bridg
 	std::vector<std::vector<uint32_t> > l_graph_id(g.edge_list_.size());
 
 	std::stack<uint32_t> S;
-	uint32_t m_num_tree_node;
+	//uint32_t m_num_tree_node;
 	bool check = true;
 
 	for (auto &i : g.vertex_list_) {
 		//l_graph_shatter_size_start = p_graph_shatter.size();
 		//l_graph_shatter_size_start = p_graph_shatter.size();
-		m_num_tree_node = g_time;
+		//m_num_tree_node = g_time;
 		//std::vector<Graph> l_graph;
 		//GraphComponent l_graph_component;
 		if (l_node[i].color == WHITE) {
@@ -559,8 +559,6 @@ bool dfsTravelBridge(Graph &g, std::set<std::pair<uint32_t, uint32_t> > &p_bridg
 			uint32_t s = i;
 			S.push(s);
 			m_node_component.push(s);
-			//std::cout << "PUSH=" << s << std::endl;
-			//std::cerr << "test\n";
 			l_node[s].color = GRAY;
 			l_node[s].discovery_time = ++g_time;
 			l_node[s].low = l_node[s].discovery_time;
@@ -575,7 +573,6 @@ bool dfsTravelBridge(Graph &g, std::set<std::pair<uint32_t, uint32_t> > &p_bridg
 						//l_node[it].discovery_time = ++g_time;
 						S.push(it);
 						m_node_component.push(it);
-						//std::cout << "PUSH=" << it << std::endl;
 						l_node[it].color = GRAY;
 						l_node[it].discovery_time = ++g_time;
 						l_node[it].low = l_node[it].discovery_time;
@@ -598,7 +595,6 @@ bool dfsTravelBridge(Graph &g, std::set<std::pair<uint32_t, uint32_t> > &p_bridg
 						if (l_node[u].predecessor > -1) {
 							auto l_predecessor = l_node[u].predecessor;
 							l_node[l_predecessor].low = std::min(l_node[l_predecessor].low, l_node[u].low);
-							//std::cout << i << " " << m_node[i].predecessor << " " << m_node[i].low << " " << m_node[m_node[i].predecessor].discovery_time << std::endl;
 
 							if (l_predecessor > -1 && l_node[u].low > l_node[l_predecessor].discovery_time) {
 								p_bridge.insert(std::pair<uint32_t, uint32_t>(l_predecessor, u));
@@ -615,19 +611,13 @@ bool dfsTravelBridge(Graph &g, std::set<std::pair<uint32_t, uint32_t> > &p_bridg
 									m_list_edge.pop();
 									l_pop_edge = m_list_edge.top();
 								}
-								//std::cout << l_pop_edge.first << "--" << l_pop_edge.second << " ";
+
 								m_list_edge.pop();
-								//std::cout << std::endl;
-								//std::cout << "NODE COMPONENT=" << m_node_component.size() << " " << m_node_component.top() << std::endl;
-								//std::cout << "Node Component\n";
 								//add note into graph
 								auto l_pop_node = m_node_component.top();
 								while (l_pop_node != u) {
 									l_g.addVertex(l_pop_node);
-									std::cout << "5--" << l_pop_node << "--" << g.edge_list_.size() << std::endl;
 									l_g.setReach(l_pop_node, g.getReach(l_pop_node));
-									std::cout << "6--" << l_pop_node << "--" << g.edge_list_.size() << std::endl;
-									//std::cout << "-----" << l_pop_node << "---" << g.getReach(l_pop_node) << std::endl;
 									//find if node belong one bridge
 									if (!l_graph_id[l_pop_node].empty()) {
 										for (auto &it_li : l_graph_id[l_pop_node]) {
@@ -639,15 +629,10 @@ bool dfsTravelBridge(Graph &g, std::set<std::pair<uint32_t, uint32_t> > &p_bridg
 								}
 								//std::cout << l_pop_node << " ";
 								l_graph_id[l_predecessor].push_back(l_graph_shatter_size);
-
 								l_g.addVertex(l_pop_node);
-								std::cout << "0--" << l_pop_node << "--" << l_g.graph_id_  << " " << l_graph_shatter_size << std::endl;
 								l_g.setReach(l_pop_node, g.getReach(l_pop_node));
-								std::cout << "1--" << l_pop_node << "--" << l_g.graph_id_ << " " << l_graph_shatter_size << std::endl;
-								//l_g.reach_[l_pop_node] = g.reach_[l_pop_node];
 								if (!l_graph_id[l_pop_node].empty()) {
 									for (auto &it_li : l_graph_id[l_pop_node]) {
-										std::cout << "2-LgraphId=" << it_li << " " << l_graph_shatter_size << std::endl;
 										p_graph_shatter[it_li].setGraphConnectedId(l_graph_shatter_size);
 									}
 								}
@@ -655,12 +640,9 @@ bool dfsTravelBridge(Graph &g, std::set<std::pair<uint32_t, uint32_t> > &p_bridg
 								//GraphConnected t_graph_connect(-1, l_pop_node, l_predecessor);
 								l_g.setGraphConnected(-1, l_pop_node, l_predecessor);
 
-								//l_g.setVConnect(l_pop_node);
 								m_node_component.pop();
-								//std::cout << std::endl;
 								l_g.sortAndRemoveDuplicateEdges();
 								p_graph_shatter.push_back(l_g);
-								//std::cout << l_g.getGraphId();
 								//Increase version
 								l_graph_shatter_size++;
 							}
@@ -671,12 +653,6 @@ bool dfsTravelBridge(Graph &g, std::set<std::pair<uint32_t, uint32_t> > &p_bridg
 			}
 		}
 
-		//std::cout << "i=" << i << " PUSH=" << m_node_component.empty() << std::endl;
-		// while (!m_node_component.empty()) {
-		// 	std::cout << m_node_component.top();
-		// 	m_node_component.pop();
-		// }
-		// std::cout << "i=------\n";
 		if (!m_node_component.empty() || !m_list_edge.empty()) {
 			Graph l_g(g.edge_list_.size(),l_graph_shatter_size);
 
@@ -685,21 +661,14 @@ bool dfsTravelBridge(Graph &g, std::set<std::pair<uint32_t, uint32_t> > &p_bridg
 				l_g.addEdge(l_pop_edge.first, l_pop_edge.second);
 				m_list_edge.pop();
 			}
-			//std::cout << std::endl;
 
-			//std::cout << "Node Component\n";
-			//auto l_pop_node = m_node_component.top();
 			while (!m_node_component.empty()) {
 				auto l_pop_node = m_node_component.top();
-				//std::cout << l_pop_node << " ";
 				l_g.addVertex(l_pop_node);
-				//l_g.reach_[l_pop_node] = g.reach_[l_pop_node];
-				std::cout << "3--" << l_pop_node << "--" << l_g.graph_id_ << " " << l_graph_shatter_size << std::endl;
 				l_g.setReach(l_pop_node, g.getReach(l_pop_node));
-				std::cout << "4--" << l_pop_node << "--" << l_g.graph_id_ << " " << l_graph_shatter_size  << " " << l_graph_id[l_pop_node].size() << std::endl;
 				if (!l_graph_id[l_pop_node].empty()) {
 					for (auto &it_li : l_graph_id[l_pop_node]) {
-						std::cout << "1-LgraphId=" << it_li << " " << l_graph_shatter_size << std::endl;
+						//std::cout << "1-LgraphId=" << it_li << " " << l_graph_shatter_size << std::endl;
 						p_graph_shatter[it_li].setGraphConnectedId(l_graph_shatter_size);
 					}
 				}
@@ -711,7 +680,7 @@ bool dfsTravelBridge(Graph &g, std::set<std::pair<uint32_t, uint32_t> > &p_bridg
 			l_graph_shatter_size++;
 		}
 
-		m_num_tree_node = g_time - m_num_tree_node;
+		//m_num_tree_node = g_time - m_num_tree_node;
 
 		//TODO: Update reach for each graph shattered
 		uint32_t f_total_reach_g1;
@@ -725,18 +694,15 @@ bool dfsTravelBridge(Graph &g, std::set<std::pair<uint32_t, uint32_t> > &p_bridg
 				f_total_reach_g2 = 0;
 				for (int j = i+1; j < l_graph_shatter_size; j++) {
 					f_total_reach_g2 += p_graph_shatter[j].getTotalReach();
-					//std::cout << "G2 " << j  << " " << l_graph[j].getTotalReach() << std::endl;
 				}
 
 				auto u_bridge = p_graph_shatter[i].graph_connected_.u_start;
 				auto v_bridge = p_graph_shatter[i].graph_connected_.v_end;
-				std::cout << "G1 " << i << " GraphId= " << p_graph_shatter[i].graph_id_ << " " << l_graph_shatter_size - l_graph_shatter_size_begin  << " " << " GraphConnected=" << p_graph_shatter[i].graph_connected_.graph_id << " size reach=" << p_graph_shatter[i].reach_.size() << std::endl;
-				std::cout << "G2 " << i << " GraphId= " << p_graph_shatter[i+1].graph_id_ << " " << l_graph_shatter_size - l_graph_shatter_size_begin << " " << " GraphConnected=" << p_graph_shatter[i+1].graph_connected_.graph_id << " size reach=" << p_graph_shatter[i+1].reach_.size() << std::endl;
-				std::cout << "UB=" << u_bridge << " VB=" << v_bridge << " IREACH=" << p_graph_shatter[i].reach_.size() << " PIREACH=" << p_graph_shatter[p_graph_shatter[i].graph_connected_.graph_id].reach_.size() << std::endl;
+				// std::cout << "G1 " << i << " GraphId= " << p_graph_shatter[i].graph_id_ << " " << l_graph_shatter_size - l_graph_shatter_size_begin  << " " << " GraphConnected=" << p_graph_shatter[i].graph_connected_.graph_id << " size reach=" << p_graph_shatter[i].reach_.size() << std::endl;
+				// std::cout << "G2 " << i << " GraphId= " << p_graph_shatter[i+1].graph_id_ << " " << l_graph_shatter_size - l_graph_shatter_size_begin << " " << " GraphConnected=" << p_graph_shatter[i+1].graph_connected_.graph_id << " size reach=" << p_graph_shatter[i+1].reach_.size() << std::endl;
+				// std::cout << "UB=" << u_bridge << " VB=" << v_bridge << " IREACH=" << p_graph_shatter[i].reach_.size() << " PIREACH=" << p_graph_shatter[p_graph_shatter[i].graph_connected_.graph_id].reach_.size() << std::endl;
 				auto u_new_reach = p_graph_shatter[i].getReach(u_bridge) + f_total_reach_g2;
 				auto v_new_reach = p_graph_shatter[p_graph_shatter[i].graph_connected_.graph_id].getReach(v_bridge) + f_total_reach_g1;
-
-				//std::cout << "G1 " << i << " " << l_graph.size() << " " << " GraphConnecte=" << l_graph[i].graph_connected_.graph_id << std::endl ;
 
 				//Update reach bridge
 				p_graph_shatter[i].setReach(u_bridge, u_new_reach);
@@ -749,9 +715,7 @@ bool dfsTravelBridge(Graph &g, std::set<std::pair<uint32_t, uint32_t> > &p_bridg
 		}
 
 		l_graph_shatter_size_begin = l_graph_shatter_size;
-		//p_graph_shatter.insert(p_graph_shatter.end(), l_graph.begin(), l_graph.end());
 	}
-
 	return true;
 }
 
@@ -828,17 +792,18 @@ int main() {
 	std::vector<Graph> m_graph_shatter;
 
 	//Read edge list format
-    if (!readEdgeList(g,"../data/test2.txt", false)) {
+    if (!readEdgeList(g,"../data/wiki-Vote.txt", false)) {
         return 0;
     }
 	//std::cout << "SIZE=" << g.edge_list_.size() << std::endl;
-	g_bet_cen.resize(g.edge_list_.size(), 0);
+
 
 	//Read motis format
 	// if (!readMetis(g, "../data/cond-mat.graph", false)) {
     //     return 0;
     // }
 
+	g_bet_cen.resize(g.edge_list_.size(), 0);
 	//std::cout << g.getDirected() << std::endl;
 	//g.printGraph();
 
